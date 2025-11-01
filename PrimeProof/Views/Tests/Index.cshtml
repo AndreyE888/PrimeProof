@@ -1,0 +1,251 @@
+@model PrimeProof.Models.ViewModels.TestInputViewModel
+@{
+    ViewData["Title"] = "PrimeProof - Тестирование простоты чисел";
+    // ПЕРЕМЕЩАЕМ определение переменной в начало
+    var tests = ViewBag.AvailableTests as List<PrimeProof.Services.TestInfo>;
+}
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h3 class="card-title mb-0">
+                    <i class="fas fa-calculator me-2"></i>Тестирование простоты чисел
+                </h3>
+            </div>
+            <div class="card-body">
+                <form asp-action="SingleTest" method="post" id="testForm">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="form-group mb-3">
+                                <label asp-for="NumberToTest" class="form-label fw-bold">Число для проверки:</label>
+                                <input asp-for="NumberToTest" class="form-control form-control-lg"
+                                       placeholder="Введите целое положительное число (например: 123456789012345678901)">
+                                <span asp-validation-for="NumberToTest" class="text-danger small"></span>
+                                <div class="form-text">Поддерживаются очень большие числа (сотни цифр)</div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group mb-3">
+                                <label asp-for="Rounds" class="form-label fw-bold">Количество раундов:</label>
+                                <input asp-for="Rounds" class="form-control" type="number" min="1" max="100" value="10">
+                                <span asp-validation-for="Rounds" class="text-danger small"></span>
+                                <div class="form-text">Только для вероятностных тестов</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group mb-4">
+                        <label class="form-label fw-bold">Выберите тест:</label>
+                        <div class="row">
+                            @if (tests != null)
+                            {
+                                foreach (var test in tests)
+                                {
+                                    <div class="col-md-6 mb-2">
+                                        <div class="form-check">
+                                            <input class="form-check-input test-radio" type="radio"
+                                                   asp-for="SelectedTest" value="@test.Id" id="@test.Id">
+                                            <label class="form-check-label" for="@test.Id">
+                                                <strong>@test.Name</strong>
+                                                <br>
+                                                <small class="text-muted">
+                                                    @if (test.IsDeterministic)
+                                                    {
+                                                        <span class="badge bg-success">Детерминированный</span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="badge bg-warning">Вероятностный</span>
+                                                    }
+                                                </small>
+                                            </label>
+                                        </div>
+                                    </div>
+                                }
+                            }
+                            else
+                            {
+                                <div class="col-12">
+                                    <div class="alert alert-warning">
+                                        <i class="fas fa-exclamation-triangle me-2"></i>
+                                        Тесты не загружены
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                        <span asp-validation-for="SelectedTest" class="text-danger small"></span>
+                    </div>
+
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-start">
+                        <button type="submit" class="btn btn-primary btn-lg me-md-2">
+                            <i class="fas fa-play me-2"></i>Выполнить тест
+                        </button>
+                        <button type="submit" formaction="@Url.Action("CompareTests")" class="btn btn-success btn-lg">
+                            <i class="fas fa-chart-bar me-2"></i>Сравнить все тесты
+                        </button>
+                        <button type="button" id="quickTestBtn" class="btn btn-outline-secondary btn-lg">
+                            <i class="fas fa-bolt me-2"></i>Быстрая проверка
+                        </button>
+                    </div>
+                </form>
+
+                <!-- Быстрая проверка -->
+                <div id="quickResult" class="mt-3" style="display: none;">
+                    <div class="alert alert-info">
+                        <h6>Результат быстрой проверки:</h6>
+                        <div id="quickResultContent"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Примеры чисел -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-lightbulb me-2"></i>Примеры для тестирования
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Простые числа:</h6>
+                        <div class="d-flex flex-wrap gap-2 mb-3">
+                            <button type="button" class="btn btn-outline-success btn-sm example-number" data-number="17">17</button>
+                            <button type="button" class="btn btn-outline-success btn-sm example-number" data-number="101">101</button>
+                            <button type="button" class="btn btn-outline-success btn-sm example-number" data-number="1009">1009</button>
+                            <button type="button" class="btn btn-outline-success btn-sm example-number" data-number="1000003">1,000,003</button>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Составные числа:</h6>
+                        <div class="d-flex flex-wrap gap-2 mb-3">
+                            <button type="button" class="btn btn-outline-danger btn-sm example-number" data-number="15">15</button>
+                            <button type="button" class="btn btn-outline-danger btn-sm example-number" data-number="1001">1001</button>
+                            <button type="button" class="btn btn-outline-danger btn-sm example-number" data-number="1000001">1,000,001</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-12">
+                        <h6>Особые случаи:</h6>
+                        <div class="d-flex flex-wrap gap-2">
+                            <button type="button" class="btn btn-outline-warning btn-sm example-number" data-number="561">561 (Кармайкла)</button>
+                            <button type="button" class="btn btn-outline-warning btn-sm example-number" data-number="1729">1729 (Харди-Рамануджана)</button>
+                            <button type="button" class="btn btn-outline-info btn-sm example-number" data-number="123456789012345678901">Большое число</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <!-- Информация о тестах -->
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-info-circle me-2"></i>О тестах простоты
+                </h5>
+            </div>
+            <div class="card-body">
+                @if (tests != null)
+                {
+                    foreach (var test in tests)
+                    {
+                        <div class="mb-3">
+                            <h6 class="fw-bold">@test.Name</h6>
+                            <p class="small mb-1">@test.Description</p>
+                            @if (test.IsDeterministic)
+                            {
+                                <span class="badge bg-success small">Гарантирует точный результат</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-warning small">Вероятностный результат</span>
+                            }
+                        </div>
+                        <hr>
+                    }
+                }
+                else
+                {
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Информация о тестах недоступна
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Рекомендации -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-tips me-2"></i>Рекомендации
+                </h5>
+            </div>
+            <div class="card-body">
+                <ul class="small">
+                    <li>Для маленьких чисел используйте <strong>Метод пробных делений</strong></li>
+                    <li>Для криптографии используйте <strong>Тест Миллера-Рабина</strong> (40+ раундов)</li>
+                    <li>Тест AKS теоретически важен, но медленный для больших чисел</li>
+                    <li>Тест Ферма подходит для обучения, но ненадежен</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // Обработчики для примеров чисел
+            $('.example-number').click(function() {
+                const number = $(this).data('number');
+                $('#NumberToTest').val(number);
+                $('#quickResult').hide();
+            });
+
+            // Быстрая проверка
+            $('#quickTestBtn').click(function() {
+                const number = $('#NumberToTest').val();
+                if (!number) {
+                    alert('Введите число для проверки');
+                    return;
+                }
+
+                $('#quickResult').show();
+                $('#quickResultContent').html('<div class="spinner-border spinner-border-sm" role="status"></div> Проверяем...');
+
+                $.get('/Tests/QuickCheck', { number: number })
+                    .done(function(data) {
+                        if (data.success) {
+                            const badgeClass = data.isPrime ? 'bg-success' : 'bg-danger';
+                            const resultText = data.isPrime ? 'Простое' : 'Составное';
+                            $('#quickResultContent').html(`
+                                <span class="badge ${badgeClass}">${resultText}</span>
+                                <br>Тест: ${data.testName}
+                                <br>Время: ${data.executionTime}
+                                <br>Вероятность: ${data.probability}
+                            `);
+                        } else {
+                            $('#quickResultContent').html(`<span class="text-danger">Ошибка: ${data.error}</span>`);
+                        }
+                    })
+                    .fail(function() {
+                        $('#quickResultContent').html('<span class="text-danger">Ошибка сервера</span>');
+                    });
+            });
+
+            // Автовыбор теста при вводе большого числа
+            $('#NumberToTest').on('input', function() {
+                const number = $(this).val();
+                if (number.length > 10) {
+                    $('#miller-rabin').prop('checked', true);
+                }
+            });
+        });
+    </script>
+}

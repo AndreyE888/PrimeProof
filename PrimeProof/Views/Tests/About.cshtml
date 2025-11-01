@@ -1,0 +1,242 @@
+@{
+    ViewData["Title"] = "PrimeProof - О тестах простоты";
+}
+
+<div class="row">
+    <div class="col-12">
+        <div class="text-center mb-5">
+            <h1 class="display-4 fw-bold text-primary mb-3">
+                <i class="fas fa-shield-alt me-3"></i>О тестах простоты
+            </h1>
+            <p class="lead text-muted">
+                Подробное описание алгоритмов проверки простоты чисел, используемых в системе PrimeProof
+            </p>
+        </div>
+
+        <!-- Метод пробных делений -->
+        <div class="card mb-4">
+            <div class="card-header bg-success text-white">
+                <h4 class="card-title mb-0">
+                    <i class="fas fa-list-ol me-2"></i>Метод пробных делений (Trial Division)
+                </h4>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-8">
+                        <h5>Описание</h5>
+                        <p>Самый простой и древний метод проверки простоты. Основан на переборе всех возможных делителей числа от 2 до квадратного корня из проверяемого числа.</p>
+
+                        <h5>Алгоритм</h5>
+                        <ol>
+                            <li>Если число меньше 2 - составное</li>
+                            <li>Если число равно 2 - простое</li>
+                            <li>Если число четное - составное</li>
+                            <li>Проверить делимость на все нечетные числа до √n</li>
+                            <li>Если делитель найден - число составное, иначе - простое</li>
+                        </ol>
+
+                        <h5>Характеристики</h5>
+                        <ul>
+                            <li><strong>Тип:</strong> Детерминированный</li>
+                            <li><strong>Сложность:</strong> O(√n)</li>
+                            <li><strong>Надежность:</strong> 100%</li>
+                            <li><strong>Применимость:</strong> Маленькие числа (до 10¹⁵)</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card bg-light">
+                            <div class="card-body text-center">
+                                <div class="feature-icon">
+                                    <i class="fas fa-search"></i>
+                                </div>
+                                <h6>Преимущества</h6>
+                                <ul class="list-unstyled small text-start">
+                                    <li class="mb-2">✓ Гарантированно точный результат</li>
+                                    <li class="mb-2">✓ Простота реализации</li>
+                                    <li class="mb-2">✓ Легко понять</li>
+                                </ul>
+                                <h6>Недостатки</h6>
+                                <ul class="list-unstyled small text-start">
+                                    <li class="mb-2">✗ Очень медленный для больших чисел</li>
+                                    <li class="mb-2">✗ Непрактичен для криптографии</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Тест Ферма -->
+        <div class="card mb-4">
+            <div class="card-header bg-warning text-dark">
+                <h4 class="card-title mb-0">
+                    <i class="fas fa-bolt me-2"></i>Тест Ферма (Fermat Test)
+                </h4>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-8">
+                        <h5>Описание</h5>
+                        <p>Вероятностный тест, основанный на Малой теореме Ферма. Если p - простое число, то для любого a, не кратного p, выполняется: a^(p-1) ≡ 1 (mod p).</p>
+
+                        <h5>Алгоритм</h5>
+                        <ol>
+                            <li>Выбрать случайное a в диапазоне [2, n-2]</li>
+                            <li>Вычислить a^(n-1) mod n</li>
+                            <li>Если результат ≠ 1 - число составное</li>
+                            <li>Повторить k раз для увеличения надежности</li>
+                        </ol>
+
+                        <h5>Характеристики</h5>
+                        <ul>
+                            <li><strong>Тип:</strong> Вероятностный</li>
+                            <li><strong>Сложность:</strong> O(k log³n)</li>
+                            <li><strong>Надежность:</strong> 1 - 1/2ᵏ (в теории)</li>
+                            <li><strong>Особенности:</strong> Числа Кармайкла</li>
+                        </ul>
+
+                        <div class="alert alert-danger mt-3">
+                            <h6><i class="fas fa-exclamation-triangle me-2"></i>Внимание: числа Кармайкла</h6>
+                            <p class="mb-0">Существуют составные числа (например, 561, 1105, 1729), которые удовлетворяют условию теоремы Ферма для всех оснований a. Эти числа "обманывают" тест Ферма.</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card bg-light">
+                            <div class="card-body text-center">
+                                <div class="feature-icon">
+                                    <i class="fas fa-theater-masks"></i>
+                                </div>
+                                <h6>Преимущества</h6>
+                                <ul class="list-unstyled small text-start">
+                                    <li class="mb-2">✓ Быстрый для больших чисел</li>
+                                    <li class="mb-2">✓ Простая математическая основа</li>
+                                    <li class="mb-2">✓ Хорош для обучения</li>
+                                </ul>
+                                <h6>Недостатки</h6>
+                                <ul class="list-unstyled small text-start">
+                                    <li class="mb-2">✗ Ненадежен (числа Кармайкла)</li>
+                                    <li class="mb-2">✗ Не используется в криптографии</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Дополнительные тесты (Миллера-Рабина и AKS) -->
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card h-100">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-industry me-2"></i>Тест Миллера-Рабина
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <p><strong>Промышленный стандарт</strong> в криптографии. Улучшенная версия теста Ферма, не подверженная проблеме чисел Кармайкла.</p>
+                        <ul class="small">
+                            <li><strong>Тип:</strong> Вероятностный</li>
+                            <li><strong>Надежность:</strong> 1 - 1/4ᵏ</li>
+                            <li><strong>Скорость:</strong> Очень быстрый</li>
+                            <li><strong>Применение:</strong> Генерация RSA-ключей</li>
+                        </ul>
+                        <div class="alert alert-success small">
+                            <i class="fas fa-check-circle me-2"></i>
+                            <strong>Рекомендуется</strong> для криптографических применений
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card h-100">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-flask me-2"></i>Тест AKS
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <p><strong>Теоретический прорыв</strong> - первый детерминированный тест с полиномиальной сложностью, не зависящий от недоказанных гипотез.</p>
+                        <ul class="small">
+                            <li><strong>Тип:</strong> Детерминированный</li>
+                            <li><strong>Надежность:</strong> 100%</li>
+                            <li><strong>Скорость:</strong> Медленный на практике</li>
+                            <li><strong>Значение:</strong> Теоретическое</li>
+                        </ul>
+                        <div class="alert alert-warning small">
+                            <i class="fas fa-microscope me-2"></i>
+                            <strong>Теоретически важен</strong>, но медленнее вероятностных тестов
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Сравнительная таблица -->
+        <div class="card mt-4">
+            <div class="card-header bg-dark text-white">
+                <h4 class="card-title mb-0">
+                    <i class="fas fa-chart-bar me-2"></i>Сравнительная таблица тестов
+                </h4>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover">
+                        <thead class="table-dark">
+                        <tr>
+                            <th>Тест</th>
+                            <th>Тип</th>
+                            <th>Надежность</th>
+                            <th>Скорость</th>
+                            <th>Применение</th>
+                            <th>Рекомендации</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr>
+                            <td><strong>Пробные деления</strong></td>
+                            <td><span class="badge bg-success">Детерминированный</span></td>
+                            <td>100%</td>
+                            <td>Медленно</td>
+                            <td>Маленькие числа</td>
+                            <td>Обучение, проверка</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Ферма</strong></td>
+                            <td><span class="badge bg-warning">Вероятностный</span></td>
+                            <td>1-1/2ᵏ</td>
+                            <td>Быстро</td>
+                            <td>Образование</td>
+                            <td>Не для криптографии</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Миллера-Рабина</strong></td>
+                            <td><span class="badge bg-warning">Вероятностный</span></td>
+                            <td>1-1/4ᵏ</td>
+                            <td>Очень быстро</td>
+                            <td>Криптография</td>
+                            <td><strong>Промышленный стандарт</strong></td>
+                        </tr>
+                        <tr>
+                            <td><strong>AKS</strong></td>
+                            <td><span class="badge bg-success">Детерминированный</span></td>
+                            <td>100%</td>
+                            <td>Медленно</td>
+                            <td>Исследования</td>
+                            <td>Теоретический интерес</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Кнопка возврата -->
+        <div class="text-center mt-4">
+            <a href="@Url.Action("Index")" class="btn btn-primary btn-lg">
+                <i class="fas fa-arrow-left me-2"></i>Вернуться к тестированию
+            </a>
+        </div>
+    </div>
+</div>

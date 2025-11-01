@@ -1,0 +1,271 @@
+﻿<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - PrimeProof</title>
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@300;400;500&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --accent-color: #e74c3c;
+            --success-color: #27ae60;
+            --warning-color: #f39c12;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .navbar-brand {
+            font-family: 'Roboto Mono', monospace;
+            font-weight: 700;
+            font-size: 1.5rem;
+        }
+
+        .main-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            margin-top: 20px;
+            margin-bottom: 20px;
+            min-height: calc(100vh - 140px);
+        }
+
+        .footer {
+            background: rgba(44, 62, 80, 0.9);
+            backdrop-filter: blur(10px);
+            color: white;
+            margin-top: auto;
+        }
+
+        .card {
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, #3498db, #2980b9);
+            border: none;
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(52, 152, 219, 0.4);
+        }
+
+        .btn-success {
+            background: linear-gradient(45deg, #27ae60, #229954);
+            border: none;
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(39, 174, 96, 0.4);
+        }
+
+        .nav-link {
+            font-weight: 500;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+            margin: 0 2px;
+        }
+
+        .nav-link:hover {
+            background: rgba(52, 152, 219, 0.1);
+            transform: translateY(-1px);
+        }
+
+        .math-text {
+            font-family: 'Roboto Mono', monospace;
+            background: #f8f9fa;
+            padding: 2px 6px;
+            border-radius: 4px;
+            border: 1px solid #e9ecef;
+        }
+
+        .prime-badge {
+            background: linear-gradient(45deg, #27ae60, #2ecc71);
+            color: white;
+            font-weight: 600;
+        }
+
+        .composite-badge {
+            background: linear-gradient(45deg, #e74c3c, #c0392b);
+            color: white;
+            font-weight: 600;
+        }
+
+        .feature-icon {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(45deg, #3498db, #9b59b6);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 15px;
+            color: white;
+            font-size: 1.5rem;
+        }
+    </style>
+
+    @RenderSection("Styles", required: false)
+</head>
+<body>
+<!-- Навигация -->
+<nav class="navbar navbar-expand-lg navbar-dark" style="background: rgba(44, 62, 80, 0.95); backdrop-filter: blur(10px);">
+    <div class="container">
+        <a class="navbar-brand" asp-controller="Tests" asp-action="Index">
+            <i class="fas fa-shield-alt me-2"></i>PrimeProof
+        </a>
+
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav me-auto">
+                <li class="nav-item">
+                    <a class="nav-link" asp-controller="Tests" asp-action="Index">
+                        <i class="fas fa-calculator me-1"></i>Тестирование
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" asp-controller="Tests" asp-action="About">
+                        <i class="fas fa-info-circle me-1"></i>О тестах
+                    </a>
+                </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                        <i class="fas fa-code me-1"></i>Алгоритмы
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="#"><span class="math-text">Trial Division</span></a></li>
+                        <li><a class="dropdown-item" href="#"><span class="math-text">Fermat Test</span></a></li>
+                        <li><a class="dropdown-item" href="#"><span class="math-text">Miller-Rabin</span></a></li>
+                        <li><a class="dropdown-item" href="#"><span class="math-text">AKS Test</span></a></li>
+                    </ul>
+                </li>
+            </ul>
+
+            <div class="navbar-nav">
+                <li class="nav-item">
+                        <span class="nav-link text-light">
+                            <i class="fas fa-graduation-cap me-1"></i>Криптография
+                        </span>
+                </li>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<!-- Основной контент -->
+<div class="container main-container">
+    <main role="main">
+        @RenderBody()
+    </main>
+</div>
+
+<!-- Футер -->
+<footer class="footer py-4 mt-5">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-6">
+                <h5 class="mb-3">
+                    <i class="fas fa-shield-alt me-2"></i>PrimeProof
+                </h5>
+                <p class="mb-2">Система тестирования простоты чисел для криптографии</p>
+                <p class="small text-light mb-0">
+                    Курсовой проект + Конференция по криптографии
+                </p>
+            </div>
+            <div class="col-md-3">
+                <h6 class="mb-3">Алгоритмы</h6>
+                <ul class="list-unstyled small">
+                    <li class="mb-1">Метод пробных делений</li>
+                    <li class="mb-1">Тест Ферма</li>
+                    <li class="mb-1">Тест Миллера-Рабина</li>
+                    <li class="mb-1">Тест AKS</li>
+                </ul>
+            </div>
+            <div class="col-md-3">
+                <h6 class="mb-3">Технологии</h6>
+                <ul class="list-unstyled small">
+                    <li class="mb-1">ASP.NET Core MVC</li>
+                    <li class="mb-1">C# / .NET 9.0</li>
+                    <li class="mb-1">BigInteger</li>
+                    <li class="mb-1">Bootstrap 5</li>
+                </ul>
+            </div>
+        </div>
+        <hr class="my-4" style="border-color: rgba(255,255,255,0.1);">
+        <div class="row align-items-center">
+            <div class="col-md-6">
+                <p class="mb-0 small">
+                    &copy; 2024 PrimeProof. Все права защищены.
+                </p>
+            </div>
+            <div class="col-md-6 text-md-end">
+                <div class="btn-group" role="group">
+                    <button type="button" class="btn btn-outline-light btn-sm">
+                        <i class="fas fa-book me-1"></i>Документация
+                    </button>
+                    <button type="button" class="btn btn-outline-light btn-sm">
+                        <i class="fas fa-code me-1"></i>Исходный код
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<!-- jQuery -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+@RenderSection("Scripts", required: false)
+
+<script>
+    // Глобальные функции
+    function formatNumber(num) {
+        return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    }
+
+    function showLoading(message = 'Выполняется вычисление...') {
+        // Можно добавить красивый loading overlay
+        console.log(message);
+    }
+
+    function showError(message) {
+        // Можно добавить красивые toast уведомления
+        alert('Ошибка: ' + message);
+    }
+</script>
+</body>
+</html>

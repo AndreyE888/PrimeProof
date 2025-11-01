@@ -1,0 +1,273 @@
+@model PrimeProof.Models.ViewModels.TestComparisonViewModel
+@{
+    ViewData["Title"] = "PrimeProof - Результаты тестирования";
+}
+
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="mb-0">
+                <i class="fas fa-chart-line me-2"></i>Результаты тестирования
+            </h2>
+            <a href="@Url.Action("Index")" class="btn btn-outline-primary">
+                <i class="fas fa-arrow-left me-2"></i>Новая проверка
+            </a>
+        </div>
+
+        <!-- Общая информация -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h5>Проверяемое число: <strong class="text-primary">@Model.Number</strong></h5>
+                        <p class="text-muted mb-0">Количество тестов: @Model.Results.Count</p>
+                    </div>
+                    <div class="col-md-6 text-md-end">
+                        <h5>Общее время: <span class="badge bg-info fs-6">@Model.FormattedTotalTime</span></h5>
+                        @if (Model.Results.All(r => r.IsPrime))
+                        {
+                            <span class="badge bg-success fs-6">ВСЕ ТЕСТЫ: ПРОСТОЕ</span>
+                        }
+                        else if (Model.Results.All(r => !r.IsPrime))
+                        {
+                            <span class="badge bg-danger fs-6">ВСЕ ТЕСТЫ: СОСТАВНОЕ</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-warning fs-6">РЕЗУЛЬТАТЫ РАЗОШЛИСЬ</span>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Сводка результатов -->
+        <div class="row mb-4">
+            @foreach (var result in Model.Results)
+            {
+                <div class="col-md-6 col-lg-3 mb-3">
+                    <div class="card h-100 @(result.IsPrime ? "border-success" : "border-danger")">
+                        <div class="card-header @(result.IsPrime ? "bg-success" : "bg-danger") text-white">
+                            <h6 class="card-title mb-0">@result.TestName</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="text-center mb-3">
+                                <span class="badge @result.ResultClass fs-6">@result.ResultText</span>
+                            </div>
+                            <div class="small">
+                                <div class="d-flex justify-content-between">
+                                    <span>Время:</span>
+                                    <strong>@result.FormattedExecutionTime</strong>
+                                </div>
+                                <div class="d-flex justify-content-between">
+                                    <span>Вероятность:</span>
+                                    <strong>@result.FormattedProbability</strong>
+                                </div>
+                                <div class="d-flex justify-content-between">
+                                    <span>Итерации:</span>
+                                    <strong>@result.Iterations</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <!-- Детальная информация по каждому тесту -->
+        <div class="card">
+            <div class="card-header bg-dark text-white">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-list-alt me-2"></i>Детали выполнения тестов
+                </h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="accordion" id="testAccordion">
+                    @for (int i = 0; i < Model.Results.Count; i++)
+                    {
+                        var result = Model.Results[i];
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="heading@(i)">
+                                <button class="accordion-button @(i == 0 ? "" : "collapsed")" type="button"
+                                        data-bs-toggle="collapse" data-bs-target="#collapse@(i)"
+                                        aria-expanded="@(i == 0 ? "true" : "false")" aria-controls="collapse@(i)">
+                                    <div class="d-flex justify-content-between align-items-center w-100 me-3">
+                                        <span>
+                                            <span class="badge @result.ResultClass me-2">@result.ResultText</span>
+                                            @result.TestName
+                                        </span>
+                                        <span class="text-muted small">@result.FormattedExecutionTime</span>
+                                    </div>
+                                </button>
+                            </h2>
+                            <div id="collapse@(i)" class="accordion-collapse collapse @(i == 0 ? "show" : "")"
+                                 aria-labelledby="heading@(i)" data-bs-parent="#testAccordion">
+                                <div class="accordion-body">
+                                    <!-- Статус теста -->
+                                    <div class="alert @(result.IsPrime ? "alert-success" : "alert-danger") mb-3">
+                                        <h6 class="alert-heading">
+                                            <i class="fas @(result.IsPrime ? "fa-check-circle" : "fa-times-circle") me-2"></i>
+                                            @result.Message
+                                        </h6>
+                                        @if (!string.IsNullOrEmpty(result.Message))
+                                        {
+                                            <p class="mb-0 small">@result.Message</p>
+                                        }
+                                    </div>
+
+                                    <!-- Детали выполнения -->
+                                    <h6 class="mb-3">
+                                        <i class="fas fa-info-circle me-2"></i>Детали выполнения:
+                                    </h6>
+                                    <div class="log-container bg-light p-3 rounded" style="max-height: 300px; overflow-y: auto;">
+                                        @if (result.Details != null && result.Details.Any())
+                                        {
+                                            foreach (var detail in result.Details)
+                                            {
+                                                <div class="log-entry mb-2 small">
+                                                    @if (detail.Contains("✓") || detail.Contains("Условие выполнено"))
+                                                    {
+                                                        <span class="text-success">✓ @detail</span>
+                                                    }
+                                                    else if (detail.Contains("❌") || detail.Contains("Найдено свидетельство") || detail.Contains("СОСТАВНОЕ"))
+                                                    {
+                                                        <span class="text-danger">❌ @detail</span>
+                                                    }
+                                                    else if (detail.Contains("⚠️") || detail.Contains("ВНИМАНИЕ") || detail.Contains("Предупреждение"))
+                                                    {
+                                                        <span class="text-warning">⚠️ @detail</span>
+                                                    }
+                                                    else if (detail.Contains("🔍") || detail.Contains("Найден"))
+                                                    {
+                                                        <span class="text-info">🔍 @detail</span>
+                                                    }
+                                                    else if (detail.Contains("---"))
+                                                    {
+                                                        <hr class="my-2">
+                                                        <strong class="text-primary">@detail</strong>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span>@detail</span>
+                                                    }
+                                                </div>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <div class="text-muted">Нет деталей выполнения</div>
+                                        }
+                                    </div>
+
+                                    <!-- Статистика -->
+                                    <div class="row mt-3">
+                                        <div class="col-md-4">
+                                            <div class="card bg-light">
+                                                <div class="card-body text-center py-2">
+                                                    <h6 class="card-title text-muted mb-1">Время</h6>
+                                                    <p class="card-text fw-bold">@result.FormattedExecutionTime</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="card bg-light">
+                                                <div class="card-body text-center py-2">
+                                                    <h6 class="card-title text-muted mb-1">Вероятность</h6>
+                                                    <p class="card-text fw-bold">@result.FormattedProbability</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="card bg-light">
+                                                <div class="card-body text-center py-2">
+                                                    <h6 class="card-title text-muted mb-1">Итерации</h6>
+                                                    <p class="card-text fw-bold">@result.Iterations</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Кнопки действий -->
+        <div class="d-grid gap-2 d-md-flex justify-content-md-center mt-4">
+            <a href="@Url.Action("Index")" class="btn btn-primary btn-lg me-md-2">
+                <i class="fas fa-redo me-2"></i>Новая проверка
+            </a>
+            <button id="exportBtn" class="btn btn-outline-success btn-lg">
+                <i class="fas fa-download me-2"></i>Экспорт результатов
+            </button>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // Экспорт результатов
+            $('#exportBtn').click(function() {
+                const results = @Html.Raw(Json.Serialize(Model));
+                const blob = new Blob([JSON.stringify(results, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `primality_test_${new Date().toISOString().slice(0,10)}.json`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            });
+
+            // Автоматическое раскрытие всех аккордеонов если тестов мало
+            if (@Model.Results.Count <= 2) {
+                $('.accordion-collapse').addClass('show');
+            }
+
+            // Подсветка расхождений в результатах
+            const primeResults = @Html.Raw(Json.Serialize(Model.Results.Select(r => r.IsPrime)));
+            if (primeResults.some(r => r) && primeResults.some(r => !r)) {
+                $('.card-header.bg-success, .card-header.bg-danger').addClass('bg-warning');
+                // Показать предупреждение
+                $('.card:first').before(`
+                    <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>Внимание!</strong> Результаты тестов разошлись. Это может указывать на особые случаи (числа Кармайкла) или ошибки в реализации.
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                `);
+            }
+        });
+    </script>
+
+    <style>
+        .log-container {
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            line-height: 1.3;
+        }
+
+        .log-entry {
+            border-left: 3px solid #dee2e6;
+            padding-left: 10px;
+            margin-bottom: 5px;
+        }
+
+        .accordion-button:not(.collapsed) {
+            background-color: #f8f9fa;
+            color: #000;
+        }
+
+        .card {
+            transition: transform 0.2s;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+        }
+    </style>
+}
