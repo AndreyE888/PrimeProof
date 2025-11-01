@@ -48,4 +48,6 @@ namespace PrimeProof.Models.ViewModels
             Results = new List<TestResultViewModel>();
         }
     }
+    
+    
 }

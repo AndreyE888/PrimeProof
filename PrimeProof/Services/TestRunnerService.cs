@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Numerics;
+using System.Threading;
 using PrimeProof.Models.ViewModels;
 using PrimeProof.Services.Interfaces;
 using PrimeProof.Services.Implementations;
@@ -36,11 +37,11 @@ namespace PrimeProof.Services
 
             var test = _tests[testType];
             
-            // ОСНОВНОЕ ИСПРАВЛЕНИЕ: Проверяем тривиальные случаи ДО выполнения теста
+            // Проверяем тривиальные случаи ДО выполнения теста
             var trivialResult = CheckTrivialCases(number);
             if (trivialResult.HasValue)
             {
-                return CreateTrivialResult(test, number, trivialResult.Value);
+                return CreateTrivialResult(test, number, trivialResult.Value, rounds);
             }
 
             // Проверяем применимость теста
@@ -51,26 +52,33 @@ namespace PrimeProof.Services
                     Number = number.ToString(),
                     IsPrime = false,
                     TestName = test.TestName,
-                    ExecutionTime = TimeSpan.Zero,
+                    ExecutionTime = TimeSpan.FromMicroseconds(1),
                     Message = $"Тест не применим к числу {number}",
                     Probability = 0.0,
                     Iterations = 0
                 };
             }
 
+            // Измеряем время выполнения
             _stopwatch.Restart();
             var result = test.IsPrime(number, rounds, out var details);
             _stopwatch.Stop();
 
-            double probability = CalculateCorrectProbability(test, result, rounds, number);
+            // Гарантируем минимальное время для избежания 0,0000 мс
+            TimeSpan executionTime = _stopwatch.Elapsed.TotalMicroseconds < 1 
+                ? TimeSpan.FromMicroseconds(1) 
+                : _stopwatch.Elapsed;
+
+            double probability = CalculateCorrectProbability(test, result, rounds);
+            int actualIterations = GetActualIterations(test, result, rounds, details);
 
             return new TestResultViewModel
             {
                 Number = number.ToString(),
                 IsPrime = result,
                 TestName = test.TestName,
-                ExecutionTime = _stopwatch.Elapsed,
-                Iterations = result ? rounds : GetActualIterations(details),
+                ExecutionTime = executionTime,
+                Iterations = actualIterations,
                 Details = details,
                 Probability = probability,
                 Message = result ? "Тест пройден успешно" : "Найдено свидетельство составности"
@@ -82,42 +90,31 @@ namespace PrimeProof.Services
         /// </summary>
         private bool? CheckTrivialCases(BigInteger number)
         {
-            // Числа меньше 2 не являются простыми
             if (number < 2) return false;
-            
-            // 2 - простое число
             if (number == 2) return true;
-            
-            // Все четные числа больше 2 - составные
             if (number % 2 == 0) return false;
-            
-            // Для остальных случаев - нужны тесты
             return null;
         }
 
         /// <summary>
         /// Создает результат для тривиальных случаев
         /// </summary>
-        private TestResultViewModel CreateTrivialResult(IPrimalityTest test, BigInteger number, bool isPrime)
+        private TestResultViewModel CreateTrivialResult(IPrimalityTest test, BigInteger number, bool isPrime, int requestedRounds)
         {
             string message = isPrime ? 
                 "Тривиальный случай: простое число" : 
                 "Тривиальный случай: составное число";
 
-            // Для тривиальных случаев ВСЕ тесты дают 100% точность
-            double probability = 100.0;
-
-            // Для тривиальных случаев показываем 1 итерацию (минимальную)
-            int iterations = 1;
+            int iterations = test.IsDeterministic ? 1 : 0;
 
             return new TestResultViewModel
             {
                 Number = number.ToString(),
                 IsPrime = isPrime,
                 TestName = test.TestName,
-                ExecutionTime = TimeSpan.Zero, // Тривиальные случаи выполняются мгновенно
+                ExecutionTime = TimeSpan.FromMicroseconds(1),
                 Message = message,
-                Probability = probability,
+                Probability = 100.0,
                 Iterations = iterations
             };
         }
@@ -125,23 +122,25 @@ namespace PrimeProof.Services
         /// <summary>
         /// Правильно рассчитывает вероятность для разных типов тестов
         /// </summary>
-        /// <summary>
-        /// Правильно рассчитывает вероятность для разных типов тестов
-        /// </summary>
-        private double CalculateCorrectProbability(IPrimalityTest test, bool isPrime, int rounds, BigInteger number)
+        private double CalculateCorrectProbability(IPrimalityTest test, bool isPrime, int rounds)
         {
-            // Для детерминированных тестов
+            // Для детерминированных тестов всегда 100%
             if (test.IsDeterministic)
             {
-                return 100.0; // Всегда 100% точность
+                return 100.0;
             }
 
             // Для вероятностных тестов
             if (isPrime)
             {
                 // Если тест говорит "простое" - используем confidence
-                string testType = test.GetType().Name.ToLower().Replace("test", "");
-                return ProbabilityCalculator.CalculateReliability(rounds, testType, isPrime);
+                string testType = test.GetType().Name.ToLower();
+                if (testType.Contains("fermat"))
+                    return (1 - ProbabilityCalculator.FermatErrorProbability(rounds)) * 100;
+                else if (testType.Contains("miller"))
+                    return (1 - ProbabilityCalculator.MillerRabinErrorProbability(rounds)) * 100;
+                else
+                    return 99.9;
             }
             else
             {
@@ -150,27 +149,38 @@ namespace PrimeProof.Services
             }
         }
 
-        private int GetActualIterations(List<string> details)
+        /// <summary>
+        /// Получает реальное количество выполненных итераций
+        /// </summary>
+        private int GetActualIterations(IPrimalityTest test, bool isPrime, int requestedRounds, List<string> details)
         {
-            if (details == null || details.Count == 0)
-                return 1;
-
-            var iterationDetail = details.FirstOrDefault(d => 
-                d.Contains("итерация") || d.Contains("iteration") || d.Contains("раунд"));
-            
-            if (iterationDetail != null)
+            // Для детерминированных тестов всегда показываем 1 итерацию
+            if (test.IsDeterministic)
             {
-                var numbers = System.Text.RegularExpressions.Regex.Matches(iterationDetail, @"\d+");
-                if (numbers.Count > 0 && int.TryParse(numbers[0].Value, out int actualIterations))
-                {
-                    return actualIterations;
-                }
+                return 1;
             }
 
-            return 1;
+            // Для вероятностных тестов, если нашли составное - ищем реальное количество
+            if (!isPrime && details != null && details.Count > 0)
+            {
+                foreach (var detail in details)
+                {
+                    if (detail.Contains("итерация") || detail.Contains("раунд"))
+                    {
+                        var numbers = System.Text.RegularExpressions.Regex.Matches(detail, @"\d+");
+                        if (numbers.Count > 0 && int.TryParse(numbers[0].Value, out int actualIterations))
+                        {
+                            return actualIterations;
+                        }
+                    }
+                }
+                return 1; // Если нашли составное быстро - минимум 1 итерация
+            }
+
+            // Для вероятностных тестов, которые прошли все раунды
+            return requestedRounds;
         }
 
-        // Остальные методы без изменений...
         public TestComparisonViewModel RunAllTests(BigInteger number, int rounds)
         {
             var comparison = new TestComparisonViewModel 
@@ -194,7 +204,7 @@ namespace PrimeProof.Services
                         Number = number.ToString(),
                         IsPrime = false,
                         TestName = test.Value.TestName,
-                        ExecutionTime = TimeSpan.Zero,
+                        ExecutionTime = TimeSpan.FromMicroseconds(1),
                         Message = $"Ошибка выполнения: {ex.Message}",
                         Probability = 0,
                         Iterations = 0
@@ -203,7 +213,9 @@ namespace PrimeProof.Services
             }
 
             totalStopwatch.Stop();
-            comparison.TotalExecutionTime = totalStopwatch.Elapsed;
+            comparison.TotalExecutionTime = totalStopwatch.Elapsed.TotalMicroseconds < 1 
+                ? TimeSpan.FromMicroseconds(1) 
+                : totalStopwatch.Elapsed;
 
             return comparison;
         }
