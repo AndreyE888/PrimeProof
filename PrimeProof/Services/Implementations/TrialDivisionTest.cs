@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Numerics;
 using PrimeProof.Services.Interfaces;
+using PrimeProof.Utilities;
 
 namespace PrimeProof.Services.Implementations
 {
@@ -42,7 +43,7 @@ namespace PrimeProof.Services.Implementations
 
             details.Add($"Начинаем проверку делением на нечетные числа до √{number}");
             
-            BigInteger limit = Sqrt(number);
+            BigInteger limit = number.Sqrt();
             details.Add($"Проверяем делители до: {limit}");
             
             int iterations = 0;
@@ -73,7 +74,7 @@ namespace PrimeProof.Services.Implementations
 
         public double GetProbability(int rounds)
         {
-            // Детерминированный тест - всегда 100%
+            // Детерминированный тест - всегда 100% для простых чисел
             return 1.0;
         }
 
@@ -81,36 +82,6 @@ namespace PrimeProof.Services.Implementations
         {
             // Метод применим ко всем положительным числам
             return number > 0;
-        }
-
-        /// <summary>
-        /// Вычисляет квадратный корень из BigInteger
-        /// </summary>
-        private BigInteger Sqrt(BigInteger n)
-        {
-            if (n == 0) return 0;
-            if (n > 0)
-            {
-                int bitLength = Convert.ToInt32(Math.Ceiling(BigInteger.Log(n, 2)));
-                BigInteger root = BigInteger.One << (bitLength / 2);
-
-                while (!IsSqrt(n, root))
-                {
-                    root += n / root;
-                    root /= 2;
-                }
-
-                return root;
-            }
-            
-            throw new ArithmeticException("NaN");
-        }
-
-        private bool IsSqrt(BigInteger n, BigInteger root)
-        {
-            BigInteger lowerBound = root * root;
-            BigInteger upperBound = (root + 1) * (root + 1);
-            return (n >= lowerBound && n < upperBound);
         }
     }
 }

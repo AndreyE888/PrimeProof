@@ -25,18 +25,49 @@ namespace PrimeProof.Utilities
         }
 
         /// <summary>
-        /// Вычисляет надежность теста в процентах
+        /// Вычисляет надежность теста в процентах для ВЕРОЯТНОСТНЫХ тестов
         /// </summary>
-        public static double CalculateReliability(int rounds, string testType)
+        public static double CalculateReliability(int rounds, string testType, bool isPrime)
         {
+            // Для детерминированных тестов - всегда 100%
+            if (testType.ToLower() == "trial" || testType.ToLower() == "aks")
+            {
+                return 100.0; // Детерминированные тесты дают 100% точность
+            }
+
+            // Для вероятностных тестов рассчитываем confidence
             double errorProb = testType.ToLower() switch
             {
                 "fermat" => FermatErrorProbability(rounds),
                 "miller-rabin" => MillerRabinErrorProbability(rounds),
-                _ => 0.0 // Детерминированные тесты
+                _ => 0.0
             };
 
             return (1 - errorProb) * 100;
+        }
+
+        /// <summary>
+        /// Форматирует вероятность для отображения пользователю
+        /// </summary>
+        public static string FormatProbability(double probability, string testType, bool isPrime, int rounds)
+        {
+            // Для детерминированных тестов всегда показываем 100%
+            if (testType.ToLower() == "trial" || testType.ToLower() == "aks")
+            {
+                return isPrime ? "100%" : "100%";
+            }
+
+            // Для вероятностных тестов форматируем confidence
+            if (probability >= 99.999)
+                return "> 99.999%";
+
+            if (probability >= 99.99)
+                return "> 99.99%";
+
+            if (probability >= 99.9)
+                return "> 99.9%";
+
+            return $"{probability:F2}%";
         }
 
         /// <summary>
@@ -68,23 +99,6 @@ namespace PrimeProof.Utilities
                 if (rounds > 1000)
                     return 100;
             }
-        }
-
-        /// <summary>
-        /// Форматирует вероятность в читаемый вид
-        /// </summary>
-        public static string FormatProbability(double probability)
-        {
-            if (probability >= 0.99999)
-                return "> 99.999%";
-
-            if (probability >= 0.9999)
-                return "> 99.99%";
-
-            if (probability < 0.0001)
-                return $"{(probability * 100):E2}%";
-
-            return $"{(probability * 100):F4}%";
         }
     }
 }

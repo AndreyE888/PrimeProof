@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Numerics;
 using System.Linq;
 using PrimeProof.Services.Interfaces;
+using PrimeProof.Utilities;
 
 namespace PrimeProof.Services.Implementations
 {
@@ -37,9 +38,11 @@ namespace PrimeProof.Services.Implementations
                 return true;
             }
 
+            // Для четных чисел возвращаем составное, но тест формально "выполнен"
             if (number.IsEven)
             {
                 details.Add($"Число {number} четное (кроме 2) - составное");
+                details.Add("Тест Ферма не выполняется для четных чисел (кроме 2)");
                 return false;
             }
 
@@ -53,12 +56,14 @@ namespace PrimeProof.Services.Implementations
                 details.Add($"⚠️ ВНИМАНИЕ: {number} - известное число Кармайкла (может обмануть тест Ферма)");
             }
 
+            int actualRounds = 0;
             for (int i = 0; i < rounds; i++)
             {
                 // Генерируем случайное основание a в диапазоне [2, n-2]
                 BigInteger a = GenerateRandomBase(number);
                 details.Add($"\n--- Раунд {i + 1} ---");
                 details.Add($"Проверяем с основанием a = {a}");
+                actualRounds++;
 
                 // Вычисляем a^(n-1) mod n
                 BigInteger result = BigInteger.ModPow(a, number - 1, number);
@@ -69,6 +74,7 @@ namespace PrimeProof.Services.Implementations
                     details.Add($"❌ Найдено свидетельство составности: {result} ≠ 1");
                     details.Add($"Число {number} - СОСТАВНОЕ");
                     details.Add($"Основание {a} является свидетелем Ферма");
+                    details.Add($"Выполнено раундов: {actualRounds} из {rounds}");
                     return false;
                 }
                 else
@@ -108,7 +114,7 @@ namespace PrimeProof.Services.Implementations
             do
             {
                 random.NextBytes(bytes);
-                bytes[bytes.Length - 1] &= 0x7F; 
+                bytes[bytes.Length - 1] &= 0x7F; //确保正数
                 result = new BigInteger(bytes);
             }
             while (result < 2 || result >= n - 1);

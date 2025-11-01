@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Numerics;
 using System.Linq;
 using PrimeProof.Services.Interfaces;
+using PrimeProof.Utilities;
 
 namespace PrimeProof.Services.Implementations
 {
@@ -40,9 +41,11 @@ namespace PrimeProof.Services.Implementations
                 return true;
             }
 
+            // Для четных чисел возвращаем составное, но тест формально "выполнен"
             if (number.IsEven)
             {
                 details.Add($"Число {number} четное (кроме 2) - составное");
+                details.Add("Тест Миллера-Рабина не выполняется для четных чисел (кроме 2)");
                 return false;
             }
 
@@ -70,8 +73,10 @@ namespace PrimeProof.Services.Implementations
 
             details.Add($"Разложение {number}-1 = 2^{s} * {d}");
 
+            int actualRounds = 0;
             for (int i = 0; i < rounds; i++)
             {
+                actualRounds++;
                 details.Add($"\n--- Раунд {i + 1} ---");
 
                 // Генерируем случайное основание
@@ -106,6 +111,7 @@ namespace PrimeProof.Services.Implementations
                     {
                         details.Add($"❌ Найдено свидетельство составности: {x} ≡ 1 (mod {number})");
                         details.Add($"Число {number} - СОСТАВНОЕ");
+                        details.Add($"Выполнено раундов: {actualRounds} из {rounds}");
                         return false;
                     }
                 }
@@ -115,6 +121,7 @@ namespace PrimeProof.Services.Implementations
                     details.Add($"❌ Найдено свидетельство составности: цепочка не пришла к {nMinusOne}");
                     details.Add($"Число {number} - СОСТАВНОЕ");
                     details.Add($"Основание {a} является свидетелем Миллера-Рабина");
+                    details.Add($"Выполнено раундов: {actualRounds} из {rounds}");
                     return false;
                 }
             }
